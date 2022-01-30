@@ -1,0 +1,95 @@
+#!groovy
+
+@Library('pipeline-fossid-autoscan@master') _
+
+node('cob1085962_RTA_QTISA'){
+//node ('upload_heap_size_issue'){
+
+            //def upload_file = "/var/jenkins_home/workspace/FOSSid/Testing/API-Upload/mumble-1.2.4.zip"
+            //def upload_file = "D:/OSM_Jenkins/jenkins_home/workspace/FOSSid/Testing/API_Upload_Windows/mumble-1.2.4.zip"
+
+            /*
+                        Ignore Rules (OPTIONAL)
+                        If any, define ignore rules for the scan as a map, with type and value.
+                        Possible values: (type: "extension", "directory", "file")
+                        The variable ignore_rules can be omitted completely, if not needed.
+                        Also, it could be avoided by directly assigning the contents to the variable my_ignore_rules in the autoScan closure below.
+            */
+            //def ignore_rules = [
+            //          [ type : "extension", value : "exe" ],
+            //          [ type : "extension", value : "dll" ],
+            //          [ type : "directory", value : "3rdparty/lib1/extensions/src" ],
+            //          [ type : "file",      value : "src/readme.md" ]
+            //]
+
+            autoScan {
+                        /* 
+                                    Mandatory Configuration to run FOSSID autoscan
+                        */                                  
+                        my_server_url = "https://rb-fossid.de.bosch.com/ADIT"
+                        my_api_credentials = "fossid_api_id"
+                        my_project_code = "SIM"
+                        my_scan_code = "ADIT_P73_G4_JSeries_Sources_K42_SIM"
+                        //Parameters for seleting the sources for scanning. 
+                        //Scan can be peformed by selecting the sources from local or by directly pointing the git repositories
+                        //Configure my_upload_file to upload sources from local
+                        //Configure my_git_repo_url and my_git_branch to fetch the sources from git
+                        //my_upload_file = "/media/pf_server/Gen3/Delivery/ADIT_OSS_scan_reports/P77_2021_11_b1/apollo/Source/p77_android_kernel_2021.11.b1.tar.bz2"
+                       my_git_repo_url = "ssh://git@10.47.103.82/gen3/integration/rbcm-delivery-lic-scan.git" //Specify URL from where to pull desired branch.
+                        my_git_branch = "b_k42-sim" //Specify URL from where to pull desired branch.
+                        //Parameters for Report Generation
+                        my_report_type = "dynamic" // possible values (html, dynamic, xlsx, spdx)
+                        my_report_selection_type = "include_all_licenses" // possible values (include_all_licenses, include_foss, include_marked_licenses, include_copyleft)
+                        my_report_selection_view = "all_files" // possible values (all_files, pending_identification, marked_as_identified)
+                        my_archive_report = "true" //Archive report in Jenkins
+
+                        /*          
+                                    Additional scan paramaters (OPTIONAL)  
+                        */ 
+                        //scan only newly added files or modified files will be scanned (Delta scan)
+                        my_delta_only = "true" // default true. To re-analyze all the files, set the value to "false"
+                        //Configure the below parameters incase you need to manage the scan results in terms of sensitivity and limit the scan results
+                        my_scan_limit = 10 // Server Default/Recommended: 10
+                        //Sensitivity of the scan
+                        my_scan_sensivity = 10 // Server Default/Recommended: 10
+                        //Incase you wanted to have only full file match then set the value to "true"
+                        my_full_file_match_only = "false" // default "false"
+
+                        /*  
+                                    Reuse previous scan Identification results (OPTIONAL)  
+                                    You can remove the below parameters if you dont want to reuse the previous identifications 
+                        */
+                        //Configure the below parameters incase you need to reuse the previous identifications. 
+                        //You can remove the below parameters if you dont want to reuse the previous identifications
+                        my_reuse_identification = "true" // By default the option is disabled. 
+                        my_identification_reuse_type =  "specific_scan" // possible values (any, only_me, specific_project, specific_scan)
+                        //If the identification_reuse_type is selected as specific_project or specific_scan then please provide the specific scan/project code
+                        my_reuse_specific_project_or_scan_code = "ADIT_P73_G4_JSeries_Sources_K41_SIM" //Specify the master scan/project code
+                        //Incase if you need to override all the previous identifications then set to "true"
+                        my_replace_existing_identifications = "false"
+
+                        /* 
+                                    Auto Identification (OPTIONAL)
+                        */
+                        //Configure the below parameters incase you need to automatically identify the copyright statements and license declarations inside the files
+                        my_auto_identification_detect_declaration = "true" //default "false". To automatically detect license declaration inside files then set to 'true'
+                        my_auto_identification_detect_copyright = "true" //default "false". To automatically detect copyright statements inside files then set the value to 'true'.
+
+                        //Jenkins specific settings
+                        my_fail_build_on_pending_identification  = "false" //default "true". Mark the jenkins build as failed incase there are any pending id. 
+
+                        /*
+                                    Ignore Rules (OPTIONAL)
+                                    Configure the below parameters incase you want to define ignore rules (for extensions, directories or files) for the scan.http://localhost:8081/job/Autoscan-repo-test/
+                        */
+                        my_ignore_rules = ignore_rules
+                        my_ignore_rules_add_type = "add" // possible values: ("add", "replace"). default: "add". Define whether ignore rules should be added or replacing existing rules for the scan.
+            }
+            
+            stage ('email')
+    {
+        emailext attachLog: true, body: "${currentBuild.currentResult}: Please refer to the FOSSID SCAN SUMMARY in the attachement to refer the scan result", compressLog: true,
+       subject: "Build Notification: ${JOB_NAME}-Build# ${BUILD_NUMBER} ${currentBuild.currentResult}", to: 'sathish.thangaraj@in.bosch.com'
+
+    }
+}
