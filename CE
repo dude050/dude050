@@ -1,0 +1,264 @@
+
+import re
+import os
+from pathlib import Path
+import xlrd
+import xlsxwriter
+
+
+import os.path 
+from tkinter import *
+import tkinter as tk
+
+class MyWindow:
+    def clear_all(self) : 
+        self.t1.delete(0, END)    
+        self.t2.delete(0, END)  
+        self.text.delete(1.0, END)
+    def clear_all_1(self) : 
+        self.t3.delete(0, END)    
+        #self.t2.delete(0, END)  
+        self.text2.delete(1.0, END)
+    def __init__(self, win):
+        self.lbl4=Label(win, text="COPYRIGHT EXTRACTION MODEL", font=(None, 13, 'bold'),bg="light blue")
+        self.lbl1=Label(win, text='Enter path to store the output (excel) :  ', font=(None, 10),bg="light blue")
+        self.lbl2=Label(win, text='Enter path of the Source dump  :  ',font=(None, 10),bg="light blue")
+        self.lbl_beforeID=Label(win, text="Before Identification :", font=(None, 12, 'bold'),bg="light blue", fg="plum4")
+        self.t1=Entry(bd=5, width=40)
+        self.t2=Entry(bd=5,width=40)
+        self.lbl4.place(x=150, y=10)
+        self.lbl_beforeID.place(x=20, y=50)
+        self.lbl1.place(x=70, y=80)
+        self.t1.place(x=300, y=80)
+        self.lbl2.place(x=100, y=130)
+        self.t2.place(x=300, y=130)
+        self.b1=Button(win, text='Run', width=6, bd=5, font=(None, 10),command=self.execute)
+        self.b2=Button(win, text='Clear', width=6,bd=5, font=(None, 10),command=self.clear_all)
+        self.b1.place(x=300, y=170)
+        self.b2.place(x=450, y=170)
+        self.text=Text(win, height = 2, width = 40, bg="light blue", fg="Green")
+        self.text.place(x=200, y=220)
+     
+    def execute(self):
+        
+        path2=str(self.t1.get())
+        path1=str(self.t2.get())
+        stored_filepath=path2 + "\\output.xlsx"
+        workbook = xlsxwriter.Workbook(stored_filepath)  # new data file 
+        worksheet = workbook.add_worksheet("Copyright Extraction")  # create a new spreadsheet in the new file
+        pattern=re.compile(r'^\s+')
+        col=0
+        row = 0
+        #linenum=0
+        bold = workbook.add_format({'bold': True})
+        worksheet.autofilter('A1:D51')
+        worksheet.write('A1', 'File/Folder Path', bold) 
+        worksheet.write('B1', 'Folder_name', bold) 
+        worksheet.write('C1', 'Copyrights', bold) 
+
+        pattern=re.compile(r"Copyright")
+        pattern2=re.compile(r'\d[0-9]$')
+        #path1=str(self.t1.get())
+        for root, dirs, files in os.walk(path1):
+            for filename in files:
+                filepath=os.path.join(root, filename)
+                filepath1=filepath.replace(path1+"\\", "")
+                p = Path(filepath1)
+                folder_name=p.parts[0] 
+                filepath=filepath.replace("\\", "/")
+                try:
+                    with open(filepath, errors='ignore',encoding='utf-8') as myfile:
+                    
+                        myList = [line.rstrip('\n') for line in myfile]   
+                        for line13 in myList:
+                            if pattern.search(line13)!=None:
+                                j=myList.index(line13)
+                                line14=re.sub(" +","", line13)
+                                line16=line14.replace(" * " ,"")
+                                line15=line16.replace("*/","")
+                                line15=line15.replace(" ", "")
+                                if pattern2.search(line15)!=None: 
+                                    j=myList.index(line13)
+                                    line3=(line13+myList[j+1])
+                                    line4=line3.replace("*","")
+                                    line5=re.sub(" +"," ",line4)
+                                    line5=line5.lstrip()
+                                elif line15.endswith("by"):
+                                    j=myList.index(line13)
+                                    line3=(line13+myList[j+1])
+                                    line4=line3.replace("*","")
+                                    line5=re.sub(" +"," ",line4)
+                                    line5=line5.lstrip()
+                                elif line15.endswith(","):
+                                    j=myList.index(line13)
+                                    line3=(line13+myList[j+1])
+                                    line4=line3.replace("*","")
+                                    line5=re.sub(" +"," ",line4)
+                                    line5=line5.lstrip()
+                                else:
+                                    line13=line13.replace("**", "")
+                                    line13= line13.replace("* ", "")
+                                    line13=line13.replace("*/","")
+                        
+                                    line5=re.sub(" +", " ", line13)
+                                    line5=line5.lstrip()
+                                spec_chars = ["!",'"',"#","%","&","'","# "," #"," Copyright (C) YEAR THE PACKAGES COPYRIGHT HOLDER","N(","OrbitManipulator code","**","* ","*/","Packaging is","Resize2fs is ","This file may be","This file may be redistributed","Based on portions ","<-- ",
+                                "*","+",";","()pmapsvc.c 1.32 91/03/11","StandardManipulator code","These elements are license under OSGPL as above, with","OrbitManipulator code","Original interface.c","Current incarnation","printf((alternatives version s - ","\n), VERSION)","\n)","Copyright and disclaimer","Licensed under the GNU General Public License version 2 (GPLv2)","Licensed under",".\\",
+                                "Prawa autorskie: Copyright 1999\(en2002 Wichert Akkerman i","static char str  qconf is ","If you wrote this, please","jwhois version 4.0, ","Copyright (C) YEAR by YOUR NAME <YOUR EMAIL>","required Copyright: field in Debians machine-readable format.","Update debian/copyright to Copyright: Mozilla Contributors for","Comment: Original ","Subject: CNOISTE WISeKey Global Root GA CA,OUOISTE Foundation Endorsed,OU","-->",
+                                "say RPMCopyright without changing the namespace pointer to","This file is","PyAPIFUNC(const char ) PyGetCopyright(void)","PyGetCopyright(void)","SRE 2.2.2","PyAPIFUNC(const char )","PyGetVersion(), PyGetCopyright())","PyStringFromString(PyGetCopyright()))","Copy See Copyright for the status of this software","deflate 1.2.8","inflate 1.2.8","See Copyright for the status of this software","1) Grant of Copyright License. Licensor hereby grants You a",
+                                "=","?","^","_","See Copyright for the status of this software.","sysv.S - ","ffi.c - ","rawapi.c - ","prepcif.c - ","See there for additional Copyrights.","See there for additional Copyrights","No original Copyright holder listed","No original Copyright holder listed, Probabily original","tracek","elp-engine","elp-fpanel","elp-dmaram","original Copyright not specified there","which is ","For BBB support","Copyrights for that are attributable to","Original Copyright follow","Original Copyrights follow","Gnomovision version 69, Copyright (C) year name of author","Copyright (C) <year> <name of author>","License terms GNU General Public License (GPL) version 2",
+                                "Subject to GPLv2.","Subject to GPLv2","distribute under GPLv2","CopyrightThe copyright owner must agree to use of GPL","Released under GPL v2","See COPYING for GPL terms.","(C) Copyright put under GNU GPL in 10/96","Based on GPLed code","This code is GPL.","GPL.","GPLv2.","Copyright (Copyright (URW),Copyright 1999 by (URW) Design  Development) readonly def","Notice (Copyright \050c\051 1997, 2009 American Mathematical Society \050<http://www.ams.org>\051, with Reserved Font Name CMMI10.) readonly def","Issuer: CNOISTE WISeKey Global Root GA CA,OUOISTE Foundation Endorsed,OU"," Issuer: CNOISTE WISeKey Global Root GA CA,OUOISTE Foundation Endorsed,OU","Copyright: Mozilla Contributors","Subject: CNOISTE WISeKey Global Root GA CA,OUOISTE Foundation Endorsed,OU",
+                                "Released under the GPL version 2.","Released under the GPL version 2","const char Copyright","copyright applying to the plugin. If no Copyright applies the","define IEC958AES1CONADCCOPYRIGHTID 0x16/< ADC Copyright ID ","define IEC958AES1CONADCCOPYRIGHTMASK 0x1f/< ADC Copyright mask","Issuer: CNOISTE WISeKey Global Root GA CA,OUOISTE Foundation Endorsed,OU","Copyright: Mozilla Contributors","This license is","VALUE LegalCopyright, ",", see dbus source code for details\0","This file may be redistributed","<Title>Copyright</Title>","Copyright notice:","Notice ((URW),","Notice (Copyright \050c\051 1997, 2009 American Mathematical Society \050<http://www.ams.org>\051, with Reserved Font Name CMSY10.) readonly def",
+                                "`","{","|","}","~", "\t","Portions ","This software is ","\n","Not to be used or disclosed without permission from Apple","..","Prawa autorskie Copyright 1999(en2002 Wichert Akkerman i","copyright applying to the plugin. If no Copyright applies the","@:@ ", "<div><p classcopyright>","</p></div>","(URW),","See the file COPYING (GNU General Public License) for license conditions. As a special exception, permission is granted to include this font program in a Postscript or PDF file that consists of a document that contains text to be displayed or printed using this font, regardless of the conditions or license applying to the document itself.) readonly def",
+                                "--c--","OpenSceneGraph - ","osgFX - ","osgManipulator - ","all copies of the Software and its Copyright notices. In addition publicly", "acknowledgments in either Copyright notices, Manuals, Publicity and Marketing"," OpenThreads library, ","OpenThreads -","Texture2DMultisample codes ","osgFXOutline - ","FirstPersonManipulator code ","osgDragger - ","Copyright (C) YEAR  COPYRIGHT HOLDER","requirements and penalties of the U.S. Copyright Act, 17 U.S.C. รยง 101et seq., the equivalent laws of other countries, and international","0x02Copyright","Copyright: (<http:www.ams.org>), with Reserved Font Name CMSY10.",
+                                "This file is distributed under the same license as the apparmor package.","dnl ","The code is distributed under the MIT license,","$echo","Distributed under the Boost","You may redistribute copies of it under the terms of","This is free software.","Based in part on code from sash,"," Based on code in src/gzip/ftgzip.c,","ViewDependentShadow codes ","echo","This source code is proprietary of ADIT","define IEC958AES1CONADCCOPYRIGHTID 0x16/< ADC Copyright ID","define IEC958AES1CONADCCOPYRIGHTMASK 0x1f/< ADC Copyright mask","case 0x02:/Copyright notice","\\n",
+                                "Use, modification, and distribution is subject to the Boost Software","Distributed under the Boost Software License, Version 1.0. (See","Distributed under the Boost Software License, Version 1.0.","accompanying","You may redistribute copies of it under the terms of,","OpenThreads library,","osgFXOutline -","dxfReader for OpenSceneGraph","dnsmasq is ","define COPYRIGHT ","This document is","Copyright (C) 2011 THE PACKAGE'S COPYRIGHT HOLDER"]
+
+                                for char1 in spec_chars:
+                                    line5 = line5.replace(char1, '')
+                                    line5=re.sub("^/|/$|^\\|\\$", "", line5)
+                                    line5=re.sub("Copyright: Copyright|Copyright @copyright|AppCopyrightCopyright|Copyright Copyright","Copyright", line5)
+                                if (line5 != ""):
+                                    row +=1
+                                    worksheet.write(row, col, filepath)
+                                    worksheet.write(row, col + 1,folder_name )
+                                    worksheet.write(row, col+2, line5 )
+                        myfile.close()   
+                except:
+                    print(filepath)
+       
+        workbook.close()    
+        self.text.delete(1.0,END)
+        self.text.insert(END, str("Copyright Extraction at package level is complete!"))
+        print("Copyright Extraction at package level is complete!")
+        print("--------------------------------------------------------------------------------------------------------")
+        self.lbl_afterID=Label(window, text="After Identification :", font=(None, 12, 'bold'),bg="light blue", fg="plum4")
+        self.lbl_afterID.place(x=20, y=270)
+        self.lbl5=Label(window, text='Enter path of BOM ID file(excel) :  ',font=(None, 10),bg="light blue")
+        self.lbl5.place(x=100, y=300)
+        self.t3=Entry(window,bd=5,width=40)
+        self.t3.place(x=300, y=300)
+        self.b3=Button(window, text='Run', width=6, bd=5, font=(None, 10),command=self.execute1)
+        self.b4=Button(window, text='Clear', width=6,bd=5, font=(None, 10),command=self.clear_all_1)
+        self.b3.place(x=300, y=340)
+        self.b4.place(x=450, y=340)
+        self.text2=Text(window, height = 2, width = 40, bg="light blue", fg="Green")
+        self.text2.place(x=200, y=390)
+        
+    def execute1(self):
+        
+        path2=str(self.t1.get())
+        Query_sheet_Path=str(self.t3.get())
+        
+        stored_filepath=path2 + "\\output.xlsx" 
+        stored_filepath1=path2 + "/output2.xlsx"
+        workbook2 = xlrd.open_workbook(Query_sheet_Path)
+        workbook1 = xlrd.open_workbook(stored_filepath)
+        workbook3 = xlsxwriter.Workbook(stored_filepath1)  
+        new_worksheet = workbook3.add_worksheet("result")
+        row = 0
+        col=0
+        bold = workbook3.add_format({'bold': True})
+        new_worksheet.write("A1", 'File/Folder Path', bold) 
+        new_worksheet.write("B1", 'Package', bold) 
+        new_worksheet.write("C1", 'Component', bold) 
+        new_worksheet.write("D1", 'Version', bold) 
+        new_worksheet.write("E1", 'License', bold) 
+        new_worksheet.write("F1", 'Copyright', bold) 
+        new_worksheet.autofilter('A1:F1')
+        wb_sheet_names= workbook2.sheet_names()
+        sh0 = workbook2.sheet_by_name("Bill of Materials")
+        sheet_names = workbook2.sheet_names()
+        #print('Sheet Names', sheet_names)
+        
+        for identified_sheet in sheet_names:
+            if "Identified Files" in identified_sheet:
+                sh1 = workbook2.sheet_by_name(identified_sheet)
+                for i in range(sh1.nrows):
+                    cellvalue1=sh1.cell_value(i,1)
+                    sh2=workbook1.sheet_by_name("Copyright Extraction")
+                    for j in range(sh2.nrows):
+                        cellvalue2=sh1.cell_value(i,0)
+                        cellvalue3=sh2.cell_value(j,0)
+                        if cellvalue3.endswith(cellvalue2):
+                            a=sh2.cell_value(j,2)
+                            folder_name2=sh2.cell_value(j, 1)
+                            row +=1
+                            cell_version=sh1.cell_value(i,2)
+                            cell_license=sh1.cell_value(i,3)
+                    
+                            print(folder_name2)
+                            new_worksheet.write(row, col, cellvalue2)
+                            new_worksheet.write(row, col + 1, folder_name2)
+                            new_worksheet.write(row, col + 2, cellvalue1)
+                            new_worksheet.write(row, col + 3, cell_version)
+                            new_worksheet.write(row, col + 4, cell_license)
+                            new_worksheet.write(row, col + 5, a)
+                    
+        print("----------------------------------------------------------------------------------------------------------")     
+        workbook3.close() 
+        
+        import pandas as pd
+        from pandas import ExcelWriter
+        from pandas import ExcelFile
+        stored_filepath2=path2  + "/result.xlsx"
+        writer=ExcelWriter(stored_filepath2, engine ='xlsxwriter')
+        file1 = pd.read_excel(stored_filepath1, 'result')
+        value1=file1.groupby(['Component', 'Version','License'])['Copyright'].apply(set).str.join('\n').reset_index()
+        pattern=re.compile(r'^\s+')
+        spec_chars = ["!",'"',"#","%","&","'","# ",
+              "*","+",";",
+              "=","?","[","]","^","_",
+              "`","{","|","}","~", pattern]
+        for char in spec_chars:
+            value1['Copyright'] = value1['Copyright'].str.replace(char, '')
+  
+        value1.columns =[column.lstrip() for column in value1.columns]
+        value2= file1.groupby('Component')['File/Folder Path'].apply('\n'.join).reset_index()
+        result=pd.merge(value2, value1, on='Component')
+        result=result.iloc[result.Component.str.lower().argsort()]
+        file2 = pd.read_excel(stored_filepath, 'Copyright Extraction')
+        value3=file2.groupby('Folder_name')['Copyrights'].apply(set).str.join('\n').reset_index()
+        
+        for char in spec_chars:
+            value3['Copyrights'] = value3['Copyrights'].str.replace(char, '')
+  
+        value3.columns =[column.lstrip() for column in value3.columns]
+        value4= file2.groupby('Folder_name')['File/Folder Path'].apply('\n'.join).reset_index()
+        result1=pd.merge(value4, value3, on='Folder_name')
+        result1=result1.iloc[result1.Folder_name.str.lower().argsort()]
+        result1.to_excel(writer, sheet_name ='Before identication', index=False)
+
+        result.to_excel(writer, sheet_name ='After identification', index=False)
+        workbook = writer.book
+        worksheet1 = writer.sheets['After identification']
+        bold = workbook.add_format({'bold': True})
+        worksheet1.write("A1", 'Component', bold) 
+        worksheet1.write("B1", 'File/Folder Path', bold) 
+        worksheet1.write("C1", 'Version', bold) 
+        worksheet1.write("D1", 'License', bold) 
+        worksheet1.write("E1", 'Copyright', bold) 
+        worksheet1.autofilter('A1:E1')
+        worksheet1.set_column('A1:E1', 15)
+        
+        worksheet2= writer.sheets['Before identication']
+        worksheet2.write("A1", 'folder_name', bold) 
+        worksheet2.write("B1", 'File/Folder Path', bold) 
+        worksheet2.write("C1", 'Copyrights', bold) 
+        worksheet2.autofilter('A1:C1')
+        worksheet2.set_column('A1:C1', 15)
+        print("----------------------------------------------------------------------------------------------------------")     
+        writer.save()
+        self.text2.delete(1.0,END)
+        self.text2.insert(END, str("Copyright Extraction at component level is complete!"))
+        print("Copyright Extraction at component level is complete!")
+window=tk.Tk()
+
+mywin=MyWindow(window)
+window.title('Copyright Extraction model')
+window.geometry("650x480")
+window.configure(background = 'light blue') 
+#img = Image.open('images/logo_test.jpg') 
+#tkimage = ImageTk.PhotoImage(img)
+#tk.Label(window,image = tkimage).place(x=518, y=0, relwidth=0.20, relheight=0.1)
+window.mainloop()
